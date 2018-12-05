@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+ 	<typeAliases>
+ 	<!-- or.kosta.dto / 패키지 경로와 클래스 파일명 같아야함 -->
+   		<typeAlias type="or.kosta.dto.MemberVO" alias="mvo"/>
+   		
+   		<typeAlias type="or.kosta.dto.ShowVO" alias="showVO"/>
+   		<typeAlias type="or.kosta.dto.SearchVO" alias="searchVO"/>
+   		
+   		<!-- <typeAlias type="or.kosta.dto.TboardVO" alias="tvo"/> -->
+   	</typeAliases>
+</configuration>
