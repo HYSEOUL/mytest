@@ -1,0 +1,9 @@
+@charset "EUC-KR";
+body{ margin:0; padding:0; text-decoration:none }
+#wrap { width:800px; margin:auto; }
+	#header, #footer { width:800px; height:100px; text-align:right; background:orange; }
+	ul { list-style:none; }
+	#header li { display:inline; }
+	#header a:link { text-decoration:none; color:#000 }
+	#content {}
+	#footer li { display:inline; }

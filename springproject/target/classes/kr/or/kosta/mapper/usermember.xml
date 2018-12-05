@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="usermember">
+
+	<insert id="join" parameterType="uservo">
+		insert into usermember values(
+		mymember_seq.nextVal, #{id}, #{pwd}, #{name}, #{birth}, 
+		#{gender}, #{email}, #{phone}, #{post},
+		#{addr1}, #{addr2}, sysdate
+		)
+	</insert>
+	
+	<select id="idChk" parameterType="String" resultType="int">
+		select
+		count(*) cnt from usermember
+		where id=#{id}
+	</select>
+
+	<select id="loginChk" parameterType="uservo" resultType="uservo">
+		select num, id, name, birth
+		from usermember
+		where id=#{id} and pwd=#{pwd}
+		<!-- select count(*) from usermember
+		where  pwd=#{pwd} and pwd in (select pwd from usermember
+		where id=#{id}) -->
+	</select>
+	
+</mapper>

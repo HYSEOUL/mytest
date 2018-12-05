@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+ <configuration>
+ 	<typeAliases>
+ 		<typeAlias type="kr.or.kosta.vo.UserMemberVO" alias="uservo"/>
+ 		<typeAlias type="kr.or.kosta.vo.PushAlarmLoggerDTO" alias="pushvo"/>
+ 	</typeAliases>
+ </configuration>
