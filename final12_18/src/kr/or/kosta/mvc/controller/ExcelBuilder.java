@@ -68,6 +68,7 @@ public class ExcelBuilder extends AbstractExcelView{
 		response.setContentType("Application/Msexcel");
 		response.setHeader("Content-Disposition", 	// 2018/12/20 fix 파일 이름이 고정이 안되고
 				"attachment; filename=classlist_exce.xls"); 	// 컨트롤러가 받는 메서드 이름이 됨 무조건;
+	
 	}	
 }
 
