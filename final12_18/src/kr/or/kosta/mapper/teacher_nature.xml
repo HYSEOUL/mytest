@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="teacher_nature">
+
+	<insert id="natureCreate" parameterType="tnvo">
+		insert into teacher_nature values(
+		teacher_nature_seq.nextVal, #{mt_id}, #{tn_my}, #{tn_you}, #{tn_category}
+		)
+	</insert>
+	<insert id="mtnatureCreate" parameterType="tnvo">
+		insert into teacher_nature values(
+		teacher_nature_seq.nextVal, #{mt_id}, #{tn_my}, #{tn_you}, #{tn_category}
+		)
+	</insert>
+
+	<select id="natureRead" parameterType="String" resultType="tnvo">
+		select * from teacher_nature
+		where mt_id=#{mt_id}
+	</select>
+	
+	<update id="natureUpdate" parameterType="tnvo">
+		update teacher_nature set tn_my=#{tn_my},
+		tn_you=#{tn_you}, tn_category=#{tn_category}
+		where mt_id=#{mt_id}
+	</update>
+	
+	<delete id="natureDelete" parameterType="String">
+		delete from teacher_nature where mt_id=#{mt_id}
+	</delete>
+
+</mapper>

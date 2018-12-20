@@ -1,0 +1,535 @@
+create table usermember(
+num number constraint usermember_num_pk primary key,
+id varchar2(20) constraint usermember_id_nn not null,
+pwd varchar2(20),
+name varchar2(35),
+birth varchar2(10),
+gender varchar2(10),
+email varchar2(50),
+phone varchar2(20),
+post char(7),
+addr1 varchar2(100),
+addr2 varchar2(100),
+edate date,
+CONSTRAINT usermember_id_uq unique(id));
+
+create sequence usermember_seq
+increment by 1
+start with 1;
+
+drop sequence pushalarmlog_seq;
+
+create table pushalarmlog(
+num number constraint pushalarmlog_num_pk primary key,
+idn varchar2(10),
+reip varchar2(30),
+uagent varchar2(100),
+status varchar2(10),
+sstime date default sysdate,
+constraint pushalarmlog_idn_fk foreign key(idn)
+references usermember(id)
+);
+
+create sequence pushalarmlog_seq
+increment by 1 
+start with 1;
+--------------2018/12/14일자 Readme
+
+-----------------------------------------------------------------------------------------------
+기술 구현 노트 (2018/12/14)
+※ 트랜잭션 기능 (구현 테스트 기능: 강의게시물 삭제 시 강의 댓글 포함 일렬삭제 트랜잭션 처리)
+- 데이터 베이스의 외래키 참조 조건을 수정하지 않았으면(on delete casecade) 동작하지 않으니 안심하세요. 
+---------------------------------------------------------------------------------------------------
+1. ClassDao, C1_ReviewDao의 delete문을 서비스로 지정해 인터페이스로 구현(ClassServiceInter)
+2. 실제 구현 ClassServiceImple객체에서 
+@Transactional(propagation=Propagation.REQUIRED,
+rollbackFor=Exception.class,readOnly = true)
+
+@Service
+public class ClassServiceImple implements ClassServiceInter{
+	@Autowired
+	private ClassDao classdao;
+	
+	@Autowired
+	private C1_ReviewDao c1dao;
+선언 후
+     delete 일렬 트랜잭션 처리
+	@Override
+	public void deleteClass(int num) throws Exception {
+		// 1. 받은 넘버값에 대한 모든 댓글 삭제 기능
+		// 2. 받은 넘버값에 대한 글 삭제 기능
+		c1dao.delc1withclass(num); 	// 강의 댓글 삭제
+		classdao.deleteClass(num); 	// 강의 게시물 삭제
+3. ClassController에서
+@Autowired
+	private ClassServiceInter classserviceinter;
+	선언 후
+	메서드에서 classserviceinter(num); 사용
+---------------------------------------------------------------------------------------------------
+
+※ resultMap(조인사용) - 구현 테스트 기능( 강의 상세보기 시 댓글 보기)
+---------------------------------------------------------------------------------------------------
+1. class.xml에서 1:n이기 때문에 collection을 선언해서 조인을 구현하고 
+* 1:1인 관계에서는 association을 사용해 주세요.(추측입니다. 테스트를 못해봤어요)
+VO객체에 조인할 객체VO의 리스트(n의 관계를 받기 위해서)setter/getter를 선언함
+
+<resultMap type="cvo" id="classc1Result">
+ 		<id property="c_num" column="c_num" javaType="int"/>
+ 		<result property="c_title" column="c_title"/>
+ 		<result property이하 생략
+ 		<collection property="c1vo" javaType="java.util.List" ofType="c1vo">
+ 			<id property="c1_num" column="c1_num" javaType="int"/> 
+ 			<result property="c_num" column="c_num"/>
+ 			<result property="c1_writer" column="c1_writer"/> 
+ 			<result property="c1_reply" column="c1_reply"/>	
+			<result property="c1_stars" column="c1_stars"/> 					
+ 		</collection>
+	 </resultMap>
+
+public List<C1_reviewVO> getC1vo() {
+		return c1vo;
+	}
+	public void setC1vo(List<C1_reviewVO> c1vo) {
+		this.c1vo = c1vo;
+	}
+	
+2. 매퍼 안에서 resultMap을 "classc1Result"로 선언
+<select id="classc1list" parameterType="int" resultMap="classc1Result"> 	 	
+	 	select c.c_num, c.c_title, c1.c1_writer,c1.c1_reply 
+	 	from class c, c1_review c1 
+	 	where c.c_num = c1.c_num(+) and c.c_num = #{num}	 	
+</select>
+
+3. ClassController의 selectoneclassc1메서드를 통해서 글 번호와 함께 넘겨줌
+
+4. (중요) jsp에서의 표시할 때 다음과 같이 반복문을 두번 돌려서
+리스트로 받은 값을 다시한번 뿌려줘야 함
+<c:forEach var="listv" items="${cvo}">
+			<%-- <p>
+				<label>댓글 작성자 닉네임: </label>
+				<input type="text" name="c1_writer1" readonly="readonly" value="${listv.c1vo.c1_writer }">
+				
+				<input type="text" name="c1_reply1" value="${listv.c1vo.c1_reply }">
+			</p> --%>
+			<c:forEach var="e" items="${listv.c1vo }">
+				<%-- ${e.c1_num }/ --%>${e.c1_writer }
+			</c:forEach>
+		</c:forEach> 
+---------------------------------------------------------------------------------------------------
+
+※ procedure - 구현 테스트 기능(강의 생성 프로시져 처리)
+---------------------------------------------------------------------------------------------------
+1. sql문에서 먼저 다음과 같은 프로시저를 생성해주세요.
+<!-- sql에서 procedure 선 생성. 아래는 생성문  
+	create or replace procedure ps_in_class(
+         ctitle in class.c_title%type,
+         cname in class.c_name%type,
+         cdate1 in class.c_date1%type,
+         cdate2 in class.c_date2%type,
+         cpnum in class.c_pnum%type,
+         cloc1 in class.c_loc1%type,
+         cloc2 in class.c_loc2%type,
+         cimg in class.c_img%type,
+         ccomment in class.c_comment%type,
+         ccategory in class.c_category%type,
+         cprice in class.c_price%type,
+         ccount in class.c_count%type,
+         cpoint in class.c_point%type)
+         is 
+         begin
+         insert into class
+         values(class_seq.nextval,ctitle,cname,cdate1,cdate2,cpnum,cloc1,cloc2,cimg,ccomment,ccategory,cprice,ccount,cpoint);
+		 end;
+	-->
+
+2. 매퍼에서 call을 사용하여 호출합니다.	
+<select id="createclasspro" statementType="CALLABLE" parameterType="cvo">
+		{
+		call ps_in_class(#{c_title},#{c_name},
+		to_date(#{c_date1},'yymmdd'),to_date(#{c_date2},'yymmdd'),#{c_pnum},#{c_loc1},#{c_loc2},
+		#{c_img},#{c_comment},#{c_category},#{c_price},#{c_count},#{c_point})
+		}
+</select>
+
+3. 결과 DAO를 사용합니다. 	
+---------------------------------------------------------------------------------------------------		
+
+-- 공통 사항(아직 하시면 안됩니다.)
+1. 기존 테이블 삭제
+- 삭제에 오류가 있을 시 아래의 명령어로 결과 튜플들을 차례대로 복사 실행하여 테이블을 삭제해줍니다.
+drop table ADMIN;
+drop table BLOCK;
+drop table C1_REVIEW;
+drop table  S_MILEAGE;
+drop table  S1_REVIEW;
+drop table  SC_LIST;
+drop table  STUDENT_NATURE;
+drop table  STUDY_LIST;
+drop table  STUDY;
+drop table  T_MILEAGE;
+drop table  TC_LIST;
+drop table  TEACHER_NATURE;
+drop table CLASS;
+drop table M_STUDENT;
+drop table M_TEACHER;
+
+- 삭제 구조 알려주는 쿼리
+SELECT  'DROP TABLE ' || object_name || ' CASCADE CONSTRAINTS;'
+  FROM    user_objects
+WHERE   object_type = 'TABLE';
+
+2. 시퀀스 삭제 재생성 
+drop sequence ADMIN_SEQ;
+drop sequence BLOCK_SEQ;
+drop sequence C1_REVIEW_SEQ;
+drop sequence CLASS_SEQ;
+drop sequence M_STUDENT_SEQ;
+drop sequence M_TEACHER_SEQ;
+drop sequence S_MILEAGE_SEQ;
+drop sequence S1_REVIEW_SEQ;
+drop sequence SC_LIST_SEQ;
+drop sequence STUDENT_NATURE_SEQ;
+drop sequence STUDY_LIST_SEQ;
+drop sequence STUDY_SEQ;
+drop sequence T_MILEAGE_SEQ;
+drop sequence TC_LIST_SEQ;
+drop sequence TEACHER_NATURE_SEQ;
+
+create sequence ADMIN_SEQ
+increment by 1
+start with 1;
+
+create sequence BLOCK_SEQ
+increment by 1
+start with 1;
+
+create sequence C1_REVIEW_SEQ
+increment by 1
+start with 1;
+
+create sequence CLASS_SEQ
+increment by 1
+start with 1;
+
+create sequence M_STUDENT_SEQ
+increment by 1
+start with 1;
+
+create sequence M_TEACHER_SEQ
+increment by 1
+start with 1;
+
+create sequence S_MILEAGE_SEQ
+increment by 1
+start with 1;
+
+create sequence S1_REVIEW_SEQ
+increment by 1
+start with 1;
+
+create sequence SC_LIST_SEQ
+increment by 1
+start with 1;
+
+create sequence STUDENT_NATURE_SEQ
+increment by 1
+start with 1;
+
+create sequence STUDY_LIST_SEQ
+increment by 1
+start with 1;
+
+create sequence STUDY_SEQ
+increment by 1
+start with 1;
+
+create sequence T_MILEAGE_SEQ
+increment by 1
+start with 1;
+
+create sequence TC_LIST_SEQ
+increment by 1
+start with 1;
+
+create sequence TEACHER_NATURE_SEQ
+increment by 1
+start with 1;
+
+3. eXERD로 포워드 엔지니어링을 통해 테이블 생성 후 더미데이터 입력
+(게시판과 댓글의 관계가 1:n에서 1:1로 변경되어서 더미데이터를 변경해야 합니다.)
+
+- 더미 데이터 
+insert into m_student values(M_STUDENT_SEQ.nextVal,'s_park','jhpark870708@naver.com','123','박준호학생',870708,'남자','010-1234-1234','서울특별시',sysdate,1,'s_junho.jpg');
+insert into m_student values(M_STUDENT_SEQ.nextVal,'s_leeda','dungda90@naver.com','123','이다혜학생',900504,'여자','010-2345-2345','부산광역시',sysdate,1,'s_dahye.jpg');
+insert into m_student values(M_STUDENT_SEQ.nextVal,'s_leeji','leeji90@naver.com','123','이지수학생',900807,'여자','010-3456-3456','인천광역시',sysdate,1,'s_jisu.jpg');
+insert into m_student values(M_STUDENT_SEQ.nextVal,'s_jeong','jhy1241@naver.com','123','정호연학생',910312,'여자','010-4567-4567','경기도',sysdate,1,'s_hoyeon.jpg');
+insert into m_student values(M_STUDENT_SEQ.nextVal,'s_ham','gkawjddbs7@naver.com','123','함정윤학생',930413,'남자','010-5678-5678','강원도',sysdate,1,'s_jeongyoon.jpg');
+insert into m_student values(M_STUDENT_SEQ.nextVal,'s_yoon','mun123@naver.com','123','윤문성학생',840312,'남자','010-6789-6789','충청북도',sysdate,1,'s_munseong.jpg');
+commit;
+
+insert into M_TEACHER values(M_TEACHER_seq.nextval,'t_park','123','박준호선생',870708,'남자','jhpark870708@naver.com','010-1234-1234',to_date('180105','yymmdd'),1,'t_junho.jpg');
+insert into M_TEACHER values(M_TEACHER_seq.nextval,'t_leeda','123','이다혜선생',901111,'여자','dungda90@naver.com','010-1234-1234',to_date('181201','yymmdd'),1,'t_dahye.jpg');
+insert into M_TEACHER values(M_TEACHER_seq.nextval,'t_leeji','123','이지수선생',901018,'여자','leeji90@naver.com','010-1234-1234',to_date('170901','yymmdd'),1,'t_jisu.jpg');
+insert into M_TEACHER values(M_TEACHER_seq.nextval,'t_jeong','123','정호연선생',930216,'여자','jhy1241@naver.com','010-1234-1234',to_date('181201','yymmdd'),1,'t_hoyeon.jpg');
+insert into M_TEACHER values(M_TEACHER_seq.nextval,'t_ham','123','함정윤선생',920907,'남자','gkawjddbs7@naver.com','010-1234-1234',to_date('180101','yymmdd'),1,'t_jeongyoon.jpg');
+insert into M_TEACHER values(M_TEACHER_seq.nextval,'t_yoon','123','윤문성선생',940629,'남자','mun123@naver.com','010-1234-1234',to_date('181201','yymmdd'),1,'t_munseong.jpg');
+
+--다혜가 쓸려고 만든 더미
+insert into M_TEACHER values(M_TEACHER_seq.nextval,'t_JOO','123','최진주선생',900613,'여자','joo123@naver.com','010-1234-1234',to_date('181201','yymmdd'),1,'t_jinjoo.jpg');
+
+commit;
+
+insert into student_nature values(student_nature_SEQ.nextVal,'s_park','성실', '적극','외국어');
+insert into student_nature values(student_nature_SEQ.nextVal,'s_leeda','적극', '성실','음악');
+insert into student_nature values(student_nature_SEQ.nextVal,'s_leeji','논쟁', '대담','스포츠');
+insert into student_nature values(student_nature_SEQ.nextVal,'s_jeong','사교', '열정', '프로그래밍');
+insert into student_nature values(student_nature_SEQ.nextVal,'s_ham','호기심', '모험', '캔들');
+insert into student_nature values(student_nature_SEQ.nextVal,'s_yoon','비판', '자유', '요리');
+commit;
+
+insert into teacher_nature values(teacher_nature_SEQ.nextVal,'t_park','적극', '성실', '외국어');
+insert into teacher_nature values(teacher_nature_SEQ.nextVal,'t_leeda','엄격', '논리','음악');
+insert into teacher_nature values(teacher_nature_SEQ.nextVal,'t_leeji','대담', '논쟁', '스포츠');
+insert into teacher_nature values(teacher_nature_SEQ.nextVal,'t_jeong','열정', '사교', '프로그래밍');
+insert into teacher_nature values(teacher_nature_SEQ.nextVal,'t_ham','사교', '사교', '프로그래밍');
+insert into teacher_nature values(teacher_nature_SEQ.nextVal,'t_yoon','대담', '대담', '프로그래밍');
+commit;
+
+insert into s_mileage values(1, 's_park', 10000);
+insert into s_mileage values(2, 's_leeda', 20000);
+insert into s_mileage values(3, 's_leeji', 30000);
+insert into s_mileage values(4, 's_jeong', 40000);
+insert into s_mileage values(5, 's_ham', 50000);
+insert into s_mileage values(6, 's_yoon', 60000);
+commit;
+
+insert into t_mileage values(1, 't_park', 10000);
+insert into t_mileage values(2, 't_leeda', 20000);
+insert into t_mileage values(3, 't_leeji', 30000);
+insert into t_mileage values(4, 't_jeong', 40000);
+insert into t_mileage values(5, 't_ham', 50000);
+insert into t_mileage values(6, 't_yoon', 60000);
+commit;
+
+Insert Into study Values(STUDY_SEQ.nextVal, 's_park', '국어스터디', ' 외국어', '서울특별시', '나나아파트 102동', to_date('180715','yymmdd'), to_date('180815','yymmdd'), 2, 6, '국어스터디합시다.국어스터디합시다.');
+Insert Into study Values(STUDY_SEQ.nextVal, 's_leeda', '수영스터디', ' 스포츠,건강', '부산광역시', '다다아파트 101동', to_date('181009','yymmdd'), to_date('181122','yymmdd'), 2, 8, '수영스터디합시다.수영스터디합시다.');
+Insert Into study Values(STUDY_SEQ.nextVal, 's_leeji', '피아노스터디', ' 음악', '인천광역시', '가가아파트 103동', to_date('180515','yymmdd'), to_date('180815','yymmdd'), 2, 4, '음악스터디합시다.음악스터디합시다.');
+Insert Into study Values(STUDY_SEQ.nextVal, 's_jeong', '동양화스터디', ' 미술', '경기도', '라라아파트 115동', to_date('180315','yymmdd'), to_date('180715','yymmdd'), 2, 5, '미술스터디합시다.미술스터디합시다.');
+Insert Into study Values(STUDY_SEQ.nextVal, 's_ham', '비보이스터디', ' 댄스', '강원도', '마마아파트 131동', to_date('180515','yymmdd'), to_date('180615','yymmdd'), 2, 8, '댄스스터디합시다.댄스스터디합시다.');
+Insert Into study Values(STUDY_SEQ.nextVal, 's_yoon', '웃는연기스터디', ' 연기', '충청북도', '아아아파트 189동', to_date('180715','yymmdd'), to_date('181115','yymmdd'), 2, 8, '연기스터디합시다.연기스터디합시다.');
+Insert Into study Values(STUDY_SEQ.nextVal, 's_park', '토익스터디', ' 시험,자격증', '서울특별시', '자자아파트 201동', to_date('180511','yymmdd'), to_date('181015','yymmdd'), 2, 9, '시험,자격증스터디합시다.시험,자격증스터디합시다.');
+Insert Into study Values(STUDY_SEQ.nextVal, 's_leeda', '십자수스터디', ' 취미', '부산광역시', '차차아파트 321동', to_date('180611','yymmdd'), to_date('180915','yymmdd'), 2, 7, '취미스터디합시다.취미스터디합시다.');
+Insert Into study Values(STUDY_SEQ.nextVal, 's_leeji', '화장잘하기스터디', ' 뷰티', '인천광역시', '타타아파트 501동', to_date('180715','yymmdd'), to_date('180815','yymmdd'), 2, 4, '뷰티스터디합시다.뷰티스터디합시다.');
+Insert Into study Values(STUDY_SEQ.nextVal, 's_jeong', '자바스터디', ' 프로그래밍', '경기도', '파파아파트 901동', to_date('180611','yymmdd'), to_date('181215','yymmdd'), 2, 10, '프로그래밍스터디합시다.프로그래밍스터디합시다.');
+commit;
+
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,1,'s_leeda','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181212','yymmdd'),'s_park');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,1,'s_leeji','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181103','yymmdd'),'s_park');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,1,'s_jeong','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181015','yymmdd'),'s_park');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,1,'s_ham','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('180923','yymmdd'),'s_park');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,1,'s_yoon','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('180822','yymmdd'),'s_park');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,2,'s_park','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181215','yymmdd'),'s_leeda');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,2,'s_leeji','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181113','yymmdd'),'s_leeda');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,2,'s_jeong','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181012','yymmdd'),'s_leeda');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,2,'s_ham','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('180922','yymmdd'),'s_leeda');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,2,'s_yoon','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('180805','yymmdd'),'s_leeda');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,3,'s_park','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181202','yymmdd'),'s_leeji');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,3,'s_leeda','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181102','yymmdd'),'s_leeji');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,3,'s_jeong','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181002','yymmdd'),'s_leeji');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,3,'s_ham','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('180902','yymmdd'),'s_leeji');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,3,'s_yoon','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('180802','yymmdd'),'s_leeji');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,4,'s_park','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181202','yymmdd'),'s_jeong');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,4,'s_leeda','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181102','yymmdd'),'s_jeong');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,4,'s_leeji','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181002','yymmdd'),'s_jeong');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,4,'s_ham','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('180902','yymmdd'),'s_jeong');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,4,'s_yoon','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('180802','yymmdd'),'s_jeong');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,5,'s_park','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181202','yymmdd'),'s_ham');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,5,'s_leeda','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181102','yymmdd'),'s_ham');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,5,'s_leeji','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181002','yymmdd'),'s_ham');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,5,'s_jeong','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('180902','yymmdd'),'s_ham');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,5,'s_yoon','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('180802','yymmdd'),'s_ham');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,6,'s_park','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181202','yymmdd'),'s_yoon');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,6,'s_leeda','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181102','yymmdd'),'s_yoon');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,6,'s_leeji','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('181002','yymmdd'),'s_yoon');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,6,'s_jeong','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('180902','yymmdd'),'s_yoon');
+insert into s1_review values(S1_REVIEW_SEQ.nextVal,6,'s_ham','스터디재밌어요.스터디재밌어요.스터디재밌어요.',to_date('180802','yymmdd'),'s_yoon');
+commit;
+
+
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,1,'s_leeda','s_park');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,1,'s_leeji','s_park');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,1,'s_jeong','s_park');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,1,'s_ham','s_park');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,1,'s_yoon','s_park');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,2,'s_park','s_leeda');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,2,'s_leeji','s_leeda');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,2,'s_jeong','s_leeda');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,2,'s_ham','s_leeda');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,2,'s_yoon','s_leeda');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,3,'s_leeda','s_leeji');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,3,'s_leeji','s_leeji');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,3,'s_jeong','s_leeji');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,3,'s_ham','s_leeji');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,3,'s_yoon','s_leeji');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,4,'s_leeda','s_jeong');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,4,'s_leeji','s_jeong');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,4,'s_park','s_jeong');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,4,'s_ham','s_jeong');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,4,'s_yoon','s_jeong');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,5,'s_leeda','s_ham');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,5,'s_leeji','s_ham');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,5,'s_park','s_ham');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,5,'s_jeong','s_ham');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,5,'s_yoon','s_ham');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,6,'s_leeda','s_yoon');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,6,'s_leeji','s_yoon');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,6,'s_park','s_yoon');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,6,'s_ham','s_yoon');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,6,'s_yoon','s_yoon');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,7,'s_leeda','s_park');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,7,'s_leeji','s_park');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,7,'s_jeong','s_park');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,7,'s_ham','s_park');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,7,'s_yoon','s_park');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,8,'s_jeong','s_leeda');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,8,'s_leeji','s_leeda');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,8,'s_park','s_leeda');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,8,'s_ham','s_leeda');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,8,'s_yoon','s_leeda');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,9,'s_leeda','s_leeji');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,9,'s_jeong','s_leeji');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,9,'s_park','s_leeji');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,9,'s_ham','s_leeji');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,9,'s_yoon','s_leeji');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,10,'s_leeda','s_jeong');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,10,'s_leeji','s_jeong');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,10,'s_park','s_jeong');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,10,'s_ham','s_jeong');
+Insert Into study_list Values(STUDY_LIST_SEQ.nextVal,10,'s_yoon','s_jeong');
+commit;
+
+Insert Into CLASS Values(CLASS_seq.nextVal,'자바가제일쉬웠어요','박준호선생',to_date('181201','yymmdd'),to_date('181230','yymmdd'),25,'서울특별시','금천구 가산동 11-2번지','1.jpg','자바코딩 강좌입니다 많은 참여 부탁드립니다.','IT',20000,2);
+Insert Into CLASS Values(CLASS_seq.nextVal,'유튜버가 되는법','정호연선생',to_date('181201','yymmdd'),to_date('181230','yymmdd'),5,'경기도','단원구 원곡동 153-4','3.jpg','우리모두 유투버가 되어보아요','취미',100000,5);
+Insert Into CLASS Values(CLASS_seq.nextVal,'방탄소년단에대하여','윤문성선생',to_date('181110','yymmdd'),to_date('191201','yymmdd'),100,'충청북도','양산동 12-85','4.jpg','우리모두 유투버가 되어보아요','취미',50000,4);
+Insert Into CLASS Values(CLASS_seq.nextVal,'게임잘하는법','이다혜선생',to_date('181030','yymmdd'),to_date('190101','yymmdd'),50,'부산광역시','영통동 116-7','5.jpg','게임잘 하는 법을 알려드릴께요','취미',50000,1);
+Insert Into CLASS Values(CLASS_seq.nextVal,'수학과 친해지기','함정윤선생',to_date('181201','yymmdd'),to_date('190201','yymmdd'),50,'강원도','원미동 1-7','6.jpg','수학은 엄청 쉬워요 여러분','교육',50000,3);
+Insert Into CLASS Values(CLASS_seq.nextVal,'국어는 참쉬었어요','박준호선생',to_date('181204','yymmdd'),to_date('190221','yymmdd'),50,'서울특별시','영랑동 16-2','7.jpg','국어책 읽는 법','교육',30000,2);
+Insert Into CLASS Values(CLASS_seq.nextVal,'건축학개론','이지수선생',to_date('181215','yymmdd'),to_date('181230','yymmdd'),10,'인천광역시','사직동 116-7','8.jpg','건축이 제일 쉬웠어요','건축',50000,5);
+Insert Into CLASS Values(CLASS_seq.nextVal,'두유만들기','정호연선생',to_date('180910','yymmdd'),to_date('181223','yymmdd'),50,'경기도','태평동 25-1','9.jpg','고소한 두유를 함께 만들어 보아야','생활',20000,1);
+Insert Into CLASS Values(CLASS_seq.nextVal,'숙면 그것은 과학','윤문성선생',to_date('181022','yymmdd'),to_date('181201','yymmdd'),50,'충청북도','민락동 45-1','10.jpg','숙면은 과학이다. 잠이보약 그것은 진리','생활',20000,1);
+Insert Into CLASS Values(CLASS_seq.nextVal,'김치찌개 끓이기','이지수선생',to_date('181201','yymmdd'),to_date('181230','yymmdd'),10,'인천광역시','원평동 151-2','2.jpg','맛있는 김치찌개를 끓여보아요.','생활',40000,3);
+commit;
+
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,1,'s_leeda','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181212','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,1,'s_leeji','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181103','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,1,'s_jeong','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181015','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,1,'s_ham','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180923','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,1,'s_yoon','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180822','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,2,'s_leeda','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181212','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,2,'s_leeji','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181103','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,2,'s_jeong','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181015','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,2,'s_ham','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180923','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,2,'s_yoon','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180822','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,3,'s_leeda','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181212','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,3,'s_leeji','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181103','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,3,'s_jeong','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181015','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,3,'s_ham','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180923','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,3,'s_yoon','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180822','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,4,'s_leeda','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181212','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,4,'s_leeji','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181103','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,4,'s_jeong','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181015','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,4,'s_ham','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180923','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,4,'s_yoon','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180822','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,5,'s_leeda','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181212','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,5,'s_leeji','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181103','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,5,'s_jeong','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181015','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,5,'s_ham','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180923','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,5,'s_yoon','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180822','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,6,'s_leeda','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181212','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,6,'s_leeji','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181103','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,6,'s_jeong','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181015','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,6,'s_ham','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180923','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,6,'s_yoon','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180822','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,7,'s_leeda','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181212','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,7,'s_leeji','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181103','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,7,'s_jeong','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181015','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,7,'s_ham','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180923','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,7,'s_yoon','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180822','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,8,'s_leeda','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181212','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,8,'s_leeji','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181103','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,8,'s_jeong','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181015','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,8,'s_ham','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180923','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,8,'s_yoon','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180822','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,9,'s_leeda','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181212','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,9,'s_leeji','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181103','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,9,'s_jeong','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181015','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,9,'s_ham','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180923','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,9,'s_yoon','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180822','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,10,'s_leeda','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181212','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,10,'s_leeji','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181103','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,10,'s_jeong','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('181015','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,10,'s_ham','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180923','yymmdd'),3);
+insert into c1_review values(C1_REVIEW_SEQ.nextVal,10,'s_yoon','강의재밌어요.강의재밌어요.강의재밌어요.',to_date('180822','yymmdd'),3);
+commit;
+
+insert into block values(BLOCK_SEQ.nextVal,'s_park','음란성', '음란성게시물신고입니다.',sysdate,'게시물신고입니다.게시물신고입니다.게시물신고입니다.');
+insert into block values(BLOCK_SEQ.nextVal,'s_leeda','불법정보', '불법정보게시물신고입니다.',sysdate,'게시물신고입니다.게시물신고입니다.게시물신고입니다.');
+insert into block values(BLOCK_SEQ.nextVal,'s_leeji','개인정보노출', '개인정보노출게시물신고입니다.',sysdate,'게시물신고입니다.게시물신고입니다.게시물신고입니다.');
+insert into block values(BLOCK_SEQ.nextVal,'s_jeong','욕설', '욕설게시물신고입니다.',sysdate,'게시물신고입니다.게시물신고입니다.게시물신고입니다.');
+insert into block values(BLOCK_SEQ.nextVal,'s_ham','도배', '도배게시물신고입니다.',sysdate,'게시물신고입니다.게시물신고입니다.게시물신고입니다.');
+insert into block values(BLOCK_SEQ.nextVal,'s_yoon','수업방해', '수업방해게시물신고입니다.',sysdate,'게시물신고입니다.게시물신고입니다.게시물신고입니다.');
+commit;
+
+insert into admin values(100,'admin','123','관리자',sysdate);
+commit;
+
+Insert Into tc_list Values(1,'자바가제일쉬웠어요','t_park');
+Insert Into tc_list Values(2,'유튜버가 되는법','t_jeong');
+Insert Into tc_list Values(3,'방탄소년단에대하여','t_yoon');
+Insert Into tc_list Values(4,'게임잘하는법','t_leeda');
+Insert Into tc_list Values(5,'수학과 친해지기','t_ham');
+Insert Into tc_list Values(6,'국어는 참쉬었어요','t_park');
+Insert Into tc_list Values(7,'건축학개론','t_leeji');
+Insert Into tc_list Values(8,'두유만들기','t_jeong');
+Insert Into tc_list Values(9,'숙면 그것은 과학','t_yoon');
+Insert Into tc_list Values(10,'김치찌개 끓이기','t_leeji');
+commit;
+
+insert into sc_list values(1,'자바가제일쉬웠어요','s_leeda');
+insert into sc_list values(2,'유튜버가 되는법','s_leeda');
+insert into sc_list values(3,'방탄소년단에대하여','s_leeda');
+insert into sc_list values(4,'게임잘하는법','s_leeda');
+insert into sc_list values(5,'수학과 친해지기','s_leeda');
+commit;
+
+insert into sc_list values(SC_LIST_SEQ.nextVal,'자바가제일쉬웠어요','s_park');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'유튜버가 되는법','s_park');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'방탄소년단에대하여','s_park');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'게임잘하는법','s_park');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'수학과 친해지기','s_park');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'자바가제일쉬웠어요','s_leeda');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'유튜버가 되는법','s_leeda');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'방탄소년단에대하여','s_leeda');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'게임잘하는법','s_leeda');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'수학과 친해지기','s_leeda');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'자바가제일쉬웠어요','s_leeji');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'유튜버가 되는법','s_leeji');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'방탄소년단에대하여','s_leeji');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'게임잘하는법','s_leeji');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'수학과 친해지기','s_leeji');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'자바가제일쉬웠어요','s_jeong');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'유튜버가 되는법','s_jeong');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'방탄소년단에대하여','s_jeong');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'게임잘하는법','s_jeong');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'수학과 친해지기','s_jeong');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'자바가제일쉬웠어요','s_ham');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'유튜버가 되는법','s_ham');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'방탄소년단에대하여','s_ham');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'게임잘하는법','s_ham');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'수학과 친해지기','s_ham');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'자바가제일쉬웠어요','s_yoon');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'유튜버가 되는법','s_yoon');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'방탄소년단에대하여','s_yoon');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'게임잘하는법','s_yoon');
+insert into sc_list values(SC_LIST_SEQ.nextVal,'수학과 친해지기','s_yoon');
+commit;

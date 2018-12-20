@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="c1_review">
+	<select id="selectreviewlist" resultType="c1vo" parameterType="int">
+		select * from c1_review where c_num=#{num}
+	</select>
+	<insert id="createview" parameterType="c1vo">
+		insert into c1_review values
+			(C1_Review_seq.nextVal,#{c_num},#{c1_writer},#{c1_reply},sysdate,#{c1_stars})
+	</insert>
+	<update id="updateview" parameterType="c1vo">
+		update c1_review set 
+		c1_reply=#{c1_reply}, c1_date=sysdate, c1_stars=#{c1_stars} where c1_num=#{c1_num}
+	</update>
+	<delete id="deleteview" parameterType="int">
+		delete from c1_review where c1_num = #{num}
+	</delete>
+	<delete id="deletewithclass" parameterType="int">
+		delete from c1_review where c_num = #{num}
+	</delete>
+</mapper>  
