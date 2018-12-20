@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="s1_reviewMapper">
+
+<insert id="s1_reviewInsert" parameterType="s1rvo">
+	insert into s1_review values(s1_review_seq.nextval,#{s_num},#{s1_id},#{s1_text},sysdate,#{ms_id})
+	</insert>
+	
+	<select id="reviewListRead" resultType="s1rdto">
+	select s1r.s1_num,s.s_title,ms.ms_name,s1r.s1_id,s1r.s1_text,to_char(s1_date,'yy-mm-dd') s1_date,s1r.ms_id,s.s_num
+	from s1_review s1r,study s,m_student ms
+	<where>
+	s1r.s_num = s.s_num  
+	and s1r.s1_id=ms.ms_id
+	</where>
+	</select>
+	
+	<delete id="reviewDelete" parameterType="int">
+	delete from s1_review 
+	<where> 
+	s1_num = #{s1_num}
+	</where>
+	</delete>
+
+</mapper>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="s_mileage">
+
+<insert id="create" parameterType="smvo"><!-- s_mileage.create -->
+	insert into s_mileage values(#{sm_num}, #{ms_id}, #{sm_point})
+</insert>
+<select id="selectOne" parameterType="String" resultType="smvo"><!-- s_mileage.selectOne -->
+	select sm_num, sm_point, ms_id from s_mileage where ms_id =#{ms_id}
+</select>
+<update id="update" parameterType="smvo"><!-- s_mileage.update -->
+	update s_mileage SET sm_point=sm_point+(#{math_point})
+	 where ms_id =#{ms_id}
+</update>
+
+</mapper>

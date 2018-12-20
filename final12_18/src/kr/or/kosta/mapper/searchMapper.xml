@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="search">
+
+	<!-- 강좌명에 따른 강의 검색 -->
+	<select id="searchClass" parameterType="hashmap"
+		resultType="cvo">
+		select c_title,c_name,to_char(c_date1,'yyyy-MM-dd') c_date1,
+		to_char(c_date2,'yyyy-MM-dd') c_date2
+		from class
+		<where>
+			c_title like '%' || #{searchName} || '%'
+		</where>
+	</select>
+
+	<!-- 강사명에 따른 강의 검색 -->
+	<select id="searchTeacher" parameterType="hashmap"
+		resultType="cvo">
+		select c_title,c_name,to_char(c_date1,'yyyy-MM-dd') c_date1,
+		to_char(c_date2,'yyyy-MM-dd') c_date2
+		from class
+		<where>
+			c_name like '%' || #{searchName} || '%'
+		</where>
+	</select>
+	
+	<!-- <select id="searchTeacher" parameterType="hashmap"
+		resultType="mtvo">
+		select mt_img,mt_name,mt_gender,mt_email
+		from m_teacher
+		<where>
+			mt_name like '%' || #{searchName} || '%'
+		</where>
+	</select> -->
+
+	<!-- 스터디 -->
+	<select id="searchStudy" parameterType="hashmap"
+		resultType="svo">
+		select s_img,s_title,s_category,s_loc1,
+		s_date1,s_date2,s_pnum,s_price
+		from study
+		<where>
+			s_title like '%' || #{searchName} || '%'
+		</where>
+	</select>
+
+</mapper>

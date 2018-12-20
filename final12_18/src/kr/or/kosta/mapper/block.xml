@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="block">
+<insert id="create" parameterType="bvo">
+insert into block values
+(block_seq.nextval,#{b_id},#{b_category},#{b_title},sysdate,#{b_content})
+</insert>
+
+<select id="selectList" resultType="bvo">
+select b_num,b_id,b_category,b_title,b_date,b_content from block
+</select>
+
+<select id="selectOne" resultType="bvo" parameterType="int">
+select b_num,b_id,b_category,b_title,b_date,b_content from block where b_num=#{b_num}
+</select>
+
+<delete id="delete" parameterType="int">
+delete from block where b_num=#{b_num}
+</delete>
+
+</mapper>
+<!-- b_id,b_category,b_title,b_date,b_content;b_num -->

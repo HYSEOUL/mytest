@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="m_student">
+
+	<insert id="infoCreate" parameterType="msvo">
+		insert into m_student
+		values(m_student_seq.nextVal,#{ms_id},#{ms_email},#{ms_pwd},#{ms_name},#{ms_birth},
+		#{ms_gender},#{ms_phone},#{ms_loc1},sysdate,#{ms_boolean},#{ms_img})
+	</insert>
+
+	<select id="readLogin" parameterType="java.util.Map"
+		resultType="msvo">
+		select ms_num, ms_id from m_student
+		where ms_id=#{ms_id} and ms_pwd=#{ms_pwd}
+	</select>
+
+	<select id="readMsInfo" parameterType="String" resultType="msvo">
+		select
+		ms_num,ms_id,ms_email,ms_pwd,ms_name,ms_birth,ms_gender,ms_phone,ms_loc1,ms_img
+		from m_student where ms_id=#{ms_id}
+	</select>
+
+	<update id="updateMsInfo" parameterType="msvo">
+		update m_student set ms_pwd=#{ms_pwd},ms_name=#{ms_name},ms_phone=#{ms_phone},
+		ms_loc1=#{ms_loc1} where ms_id=#{ms_id}
+	</update>
+
+	<delete id="deleteMsInfo" parameterType="String">
+		delete from m_student where ms_id=#{ms_id}
+	</delete>
+    
+    <select id="idChk" parameterType="String" resultType="int">
+		select count(*) cnt from m_student where ms_id=#{ms_id}
+	</select>
+	
+</mapper>

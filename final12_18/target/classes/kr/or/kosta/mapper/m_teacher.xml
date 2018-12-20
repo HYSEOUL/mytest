@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="teacher">
+
+	<insert id="create" parameterType="mtvo">
+		insert into m_teacher values(
+		m_teacher_seq.nextval, #{mt_id}, #{mt_pwd}, #{mt_name}, #{mt_birth}, 
+		#{mt_gender}, #{mt_email}, #{mt_phone}, sysdate, #{mt_boolean}, #{mt_img}
+		)
+	</insert>
+
+	<select id="read" parameterType="String" resultType="mtvo">
+		select mt_num, mt_id, mt_pwd, mt_name, mt_birth, mt_gender, mt_email, mt_phone, mt_regdate, mt_boolean, mt_img
+		from m_teacher where mt_id=#{mt_id}
+	</select>
+	
+	<update id="update" parameterType="mtvo">
+		update m_teacher set mt_pwd=#{mt_pwd}, mt_name=#{mt_name}, mt_phone=#{mt_phone}
+		where mt_id=#{mt_id}
+	</update>
+		
+	<select id="readLogin_T" parameterType="java.util.Map" resultType="mtvo"><!-- id와 pwd 존재하는지 DB에서 비교 -->
+		select mt_num, mt_id from m_teacher where mt_id=#{mt_id} and mt_pwd=#{mt_pwd}
+	</select>
+	
+	<delete id="delete" parameterType="String">
+		delete from m_teacher where mt_id=#{mt_id}
+	</delete>
+<!-- 	<delete id="delete2" parameterType="int">
+		delete from m_teacher where mt_num=#{num}
+	</delete> -->
+	
+	<!-- <select id="deleteNature" parameterType="String" resultType="mtvo">
+		select mt_num, mt_id, mt_pwd, mt_name, mt_birth, mt_gender, mt_email, mt_phone, mt_regdate, mt_boolean, mt_img
+		from teacher_nature where mt_id=#{mt_id}
+	</select> -->
+
+</mapper>
