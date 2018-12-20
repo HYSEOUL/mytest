@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="tc_listMapper">
+
+	<resultMap type="tcvo" id="m_teacherClassList">
+		<id property="c_title" column="c_title" javaType="String" />
+		<result property="tc_num" column="tc_num" />
+		<collection property="cvo" javaType="java.util.List"
+			resultMap="classResult" ofType="cvo"></collection>
+	</resultMap>
+	<resultMap type="cvo" id="classResult">
+		<id property="c_num" column="c_num" javaType="int" />
+		<result property="c_name" column="c_name" />
+		<result property="c_category" column="c_category" />
+		<result property="c_date1" column="c_date1" />
+		<result property="c_date2" column="c_date2" />
+		<result property="c_price" column="c_price" />
+	</resultMap>
+	
+	<select id="tc_list" parameterType="String"
+		resultMap="m_teacherClassList">
+		select c.c_name, to_char(c_date1,'yy-mm-dd')
+		c_date1, c.c_num, to_char(c_date2,'yy-mm-dd') c_date2, 
+		c.c_category, c.c_price,tl.c_title ,tl.tc_num
+		from tc_list tl,class c 
+		where
+		tl.c_title = c.c_title
+		and tl.mt_id= #{mt_id}
+	</select>
+
+	<!-- select:create procedure 를 먼저 실행해야 함.
+		create or replace procedure ps_in_tc(
+		 tctitle in tc_list.c_title%type, 
+		 tcid in tc_list.mt_id%type)
+		  is
+		  begin
+		  insert into tc_list( tc_num,c_title,mt_id)
+		values(tc_list_seq.nextVal,tctitle,tcid);
+		 end;
+		  -->
+
+	<select id="create" statementType="CALLABLE" parameterType="tcvo">
+		{
+		call ps_in_tc(#{c_title},#{mt_id})
+		}
+	</select>
+
+	<delete id="tc_listDelete" parameterType="int">
+		delete from tc_list where tc_num = #{tc_num}
+	</delete>
+
+</mapper>
