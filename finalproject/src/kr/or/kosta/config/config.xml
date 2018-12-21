@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<typeAliases>
+		<!-- 문성 -->
+		<typeAlias type="dto.BlockVO" alias="bvo" />
+		<typeAlias type="dto.S_mileageVO" alias="smvo" />
+		<!-- 준호 -->
+		<typeAlias type="dto.ClassadVO" alias="advo" />
+		<typeAlias type="dto.PushAlarmLoggerDTO" alias="pushvo" />
+		<typeAlias type="dto.M_studentVO" alias="msvo" />
+		<typeAlias type="dto.Student_natureVO" alias="snvo" />
+		<typeAlias type="dto.ClassadVO" alias="cadvo" />
+      	<typeAlias type="dto.StudyadVO" alias="sadvo" />
+
+		<!-- 지수 -->
+		<typeAlias type="dto.StudyVO" alias="svo" />
+		<typeAlias type="dto.Sc_listDTO" alias="scdto" />
+		<typeAlias type="dto.Sc_listVO" alias="scvo" />
+
+		<!-- 다혜 -->
+		<!-- <typeAlias type="dto.Tc_listDTO" alias="tcdto" /> -->
+		<typeAlias type="dto.S1_reviewDTO" alias="s1rdto" />
+		<typeAlias type="dto.Tc_listVO" alias="tcvo" />
+		<typeAlias type="dto.T_mileageVO" alias="tmvo" />
+		<typeAlias type="dto.S1_reviewVO" alias="s1rvo" />
+
+		<typeAlias type="dto.ShopBag_Stuudy_listDTO" alias="sbsldto"/>
+		<typeAlias type="dto.ShopBag_Class_listDTO" alias="scldto"/>
+
+		<!-- 정윤 --> 
+		<typeAlias type="dto.ClassVO" alias="cvo"/>
+		<typeAlias type="dto.C1_reviewVO" alias="c1vo" />
+		<typeAlias type="dto.SearchVO" alias="searchvo" />
+		
+		<!-- ?? -->
+		<typeAlias type="dto.AdminVO" alias="avo" />		
+
+		<!-- 호연 -->
+		<typeAlias type="dto.M_teacherVO" alias="mtvo" />
+		<typeAlias type="dto.Teacher_natureVO" alias="tnvo" />
+		<typeAlias type="dto.Study_listVO" alias="slvo" />		
+		
+	</typeAliases>
+<mappers>
+	<!-- 정윤 -->
+	<mapper class="annomapper.AdminMapper"/>
+</mappers>
+</configuration>

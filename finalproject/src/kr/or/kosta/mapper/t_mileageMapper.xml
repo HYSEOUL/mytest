@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="t_mileageMapper">
+
+	<select id="tm_point_s" parameterType="String" resultType="tmvo">
+		select tm_num,mt_id,tm_point
+		from t_mileage
+		where mt_id = #{mt_id}
+	</select>
+
+	<update id="t_mileageupdate" parameterType="tmvo"><!-- timeout="60"> -->
+		update
+		T_MILEAGE set
+		<if test="tmNumber == 0"><!-- 변화 가능한(? + or -) math_point값 -->
+			TM_POINT = TM_POINT+(#{math_point})
+		</if>
+		<if test="tmNumber != null">
+			<choose>
+				<when test="tmNumber == 1"><!-- 소액과금 = 1 -->
+					TM_POINT = TM_POINT-10000
+				</when>
+				<when test="tmNumber == 2"><!-- 고액과금(추천) = 2 -->
+					TM_POINT = TM_POINT-20000
+				</when>
+			</choose>
+		</if>
+		<where>
+		MT_ID = #{mt_id}
+		</where> 
+	</update>
+
+	<insert id="insert" parameterType="tmvo">
+		insert into t_mileage values(t_mileage_seq.nextVal,#{mt_id},#{tm_point})
+	</insert>
+
+	<delete id="t_mileageDelete" parameterType="int">
+		delete from T_MILEAGE where mt_id = #{mt_id}
+	</delete>
+
+
+</mapper>

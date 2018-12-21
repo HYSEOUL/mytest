@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="matching">
+<select id="studyMatch" parameterType="snvo" resultType="svo"><!-- matching.studyMatch -->
+	select s_num ,ms_id, s_title, s_category, s_loc1, s_loc2, s_date1, s_date2,s_count,s_pnum,s_comment,s_img,s_price,s_point, s_count*s_price as joinPrice 
+	from study where s_category=#{sn_category} and ms_id in (select ms_id from student_nature where sn_my=#{sn_you})
+</select>
+</mapper>
+<!-- b_id,b_category,b_title,b_date,b_content;b_num -->

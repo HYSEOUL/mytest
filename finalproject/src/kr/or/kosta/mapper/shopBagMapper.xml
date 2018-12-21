@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="shopBagMapper">
+<!--  아래 리절트맵 실패작   
+	<resultMap type="slvo" id="studyList_search">
+		<id property="sl_id" column="sl_id" javaType="String"/>
+		<result property="sl_id" column="sl_id"/>
+		<result property="sl_num" column="sl_num"/>
+		<collection property="svo" javaType="java.util.List" 
+					resultMap="study_search" ofType="svo"></collection>	
+	</resultMap>
+	
+	<resultMap type="svo" id="study_search">
+		<id property="s_num" column="s_num" javaType="int"/>
+		<result property="s_title" column="s_title"/>
+		<result property="s_category" column="s_category"/>
+		<result property="s_loc1" column="s_loc1"/>
+		<result property="s_loc2" column="s_loc2"/>
+		<result property="s_date1" column="s_date1"/>
+		<result property="s_date2" column="s_date2"/>
+		<result property="s_count" column="s_count"/>
+		<result property="s_pnum" column="s_pnum"/>
+		<result property="s_comment" column="s_comment"/>
+		<result property="s_img" column="s_img"/>
+		<result property="s_num" column="s_num"/>	
+		<collection property="msvo" javaType="java.util.List"
+					resultMap="m_student_search" ofType="msvo"></collection>
+	</resultMap>
+	
+	<resultMap type="msvo" id="m_student_search">
+		<id property="ms_id" column="ms_id" javaType="String"/>
+		<result property="ms_name" column="ms_name"/>
+	</resultMap>
+ -->
+
+	<select id="readStudyBagList" parameterType="slvo" resultType="sbsldto"> <!-- sbsldto -->
+		select ms.ms_name,s.s_title,s.s_category,s.s_loc1,s.s_loc2,to_char(s_date1,'yy-mm-dd') s_date1,to_char(s_date2,'yy-mm-dd') s_date2,s.s_count,s.s_pnum,s.s_comment,s.s_img,s.s_price,
+	       s.s_num,sl.sl_num 
+		from study s, study_list sl,m_student ms 
+		<where>
+			sl.s_num = s.s_num and ms.ms_id = s.ms_id 
+		and sl.sl_buy = #{sl_buy} and sl.sl_id = #{sl_id} 
+		</where> 
+	</select>
+	
+	<select id="readClassBagList" parameterType="scvo" resultType="scldto"> 
+		select c.c_title,c.c_name,to_char(c_date1,'yy-mm-dd') c_date1,to_char(c_date2,'yy-mm-dd') c_date2,c.c_pnum,c.c_loc1,c.c_loc2,c.c_img,c.c_comment,c.c_category,c.c_price,c_count,
+        sc.sc_num,c.c_num 
+		from sc_list sc, class c 
+		<where> 
+		sc.c_title = c.c_title and sc.sc_buy = #{sc_buy}  and sc.ms_id = #{ms_id} 
+		</where> 
+	</select>
+	
+</mapper>

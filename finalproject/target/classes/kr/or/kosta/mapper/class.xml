@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="class">
+
+<!-- 강의 생성(Create)에 사용하는 매퍼 -->
+	<select id="createclasspro" statementType="CALLABLE" parameterType="cvo">
+		{
+		call ps_in_class(#{c_title},#{c_name},
+		to_date(#{c_date1},'yymmdd'),to_date(#{c_date2},'yymmdd'),#{c_pnum},#{c_loc1},#{c_loc2},
+		#{c_img},#{c_comment},#{c_category},#{c_price},#{c_count},#{c_point})
+		}
+	</select>
+	
+	<!-- sql에서 procedure 선 생성. 아래는 생성문  
+	create or replace procedure ps_in_class(
+         ctitle in class.c_title%type,
+         cname in class.c_name%type,
+         cdate1 in class.c_date1%type,
+         cdate2 in class.c_date2%type,
+         cpnum in class.c_pnum%type,
+         cloc1 in class.c_loc1%type,
+         cloc2 in class.c_loc2%type,
+         cimg in class.c_img%type,
+         ccomment in class.c_comment%type,
+         ccategory in class.c_category%type,
+         cprice in class.c_price%type,
+         ccount in class.c_count%type,
+         cpoint in class.c_point%type)
+         is 
+         begin
+         insert into class
+         values(class_seq.nextval,ctitle,cname,cdate1,cdate2,cpnum,
+         cloc1,cloc2,cimg,ccomment,ccategory,cprice,ccount,cpoint);
+		 end;
+	-->
+
+<!-- 강의 읽기(Read)에 사용하는 매퍼 -->
+	
+	
+	<!-- 강의 갯수 페이징 처리 사용  -->	
+	<select id="count" resultType="int" parameterType="searchvo">
+		select count(*) from class
+	</select>
+		
+	<select id="selectlistclass2" resultType="cvo" parameterType="searchvo">
+		<![CDATA[
+		select c_num, c_title, c_name, c_date1, c_date2, c_pnum, c_loc1, c_loc2,
+        c_img, c_comment, c_category, c_price, c_count,
+		case when (to_date(sysdate,'yyyy-mm-dd'))-(to_date(c_date1,'yyyy-mm-dd'))>=0  then 1
+		when (to_date(sysdate,'yyyy-mm-dd'))- (to_date(c_date1,'yyyy-mm-dd'))<0 then 0
+		end zcount
+		from (
+		select * from class order by c_num desc
+		)
+		]]>
+	</select>
+	
+	<resultMap type="cvo" id="classc1Result">
+ 		<id property="c_num" column="c_num" javaType="int"/>
+ 		<result property="c_title" column="c_title"/>
+ 		<result property="c_name" column="c_name"/>
+ 		<result property="c_date1" column="c_date1"/>
+ 		<result property="c_date2" column="c_date2"/>
+ 		<result property="c_pnum" column="c_pnum"/>
+ 		<result property="c_loc1" column="c_loc1"/>
+ 		<result property="c_loc2" column="c_loc2"/>
+ 		<result property="c_img" column="c_img"/>
+ 		<result property="c_comment" column="c_comment"/>
+ 		<result property="c_category" column="c_category"/>
+ 		<result property="c_price" column="c_price"/>
+ 		<result property="c_count" column="c_count"/>
+ 		<result property="c_point" column="c_point"/>
+ 		<collection property="c1vo" javaType="java.util.List" ofType="c1vo">
+ 			<id property="c1_num" column="c1_num" javaType="int"/> 
+ 			<result property="c_num" column="c_num"/>
+ 			<result property="c1_writer" column="c1_writer"/> 
+ 			<result property="c1_reply" column="c1_reply"/>	
+			<result property="c1_stars" column="c1_stars"/> 					
+ 		</collection>
+	 </resultMap>
+	 
+	 <select id="classc1list" parameterType="int" resultMap="classc1Result"> 	 	
+	 	select c.c_num, c.c_title, c.c_name, c.c_date1, c.c_date2, c.c_pnum,
+	 	c.c_loc1, c.c_loc2, c.c_img, c.c_comment, c.c_category, 
+	 	c.c_price, c.c_count, c.c_point,
+	 	c1.c1_writer, c1.c1_reply, c1.c1_stars 
+	 	from class c, c1_review c1 
+	 	where c.c_num = c1.c_num(+) and c.c_num = #{num}	 	
+ 	</select>
+
+<!-- 강의 수정(Update)에 사용하는 매퍼 -->	
+	
+	<select id="selectoneclass" parameterType="int" resultType="cvo"> 
+		select * from class where c_num = #{num}
+ 	</select>
+	
+	<update id="updateclass2" parameterType="cvo">
+		update class set c_title=#{c_title}, c_date1=sysdate,
+		c_date2=sysdate, c_pnum=#{c_pnum},c_loc1=#{c_loc1},
+		c_loc2=#{c_loc2},c_img=#{c_img},
+		c_comment=#{c_comment}, c_category=#{c_category},
+		c_price=#{c_price},c_count=#{c_count},c_point=#{c_point}		 
+		where c_num=#{c_num}
+	</update>
+	
+<!-- 강의 삭제(Search)에 사용하는 매퍼 -->		
+	<delete id="deleteclass" parameterType="int">
+		delete from class where c_num = #{num}
+	</delete>
+
+<!-- 강의 검색(Search)에 사용하는 매퍼 -->	
+ 	<select id="listsearch" resultType="cvo" parameterType="searchvo" >
+      	<![CDATA[
+      	select c_num, c_title, c_name, c_date1, c_date2, c_pnum, c_loc1, c_loc2,
+        c_img, c_comment, c_category, c_price, c_count,
+		case when (to_date(sysdate,'yyyy-mm-dd'))-(to_date(c_date1,'yyyy-mm-dd'))>=0  then 1
+		when (to_date(sysdate,'yyyy-mm-dd'))- (to_date(c_date1,'yyyy-mm-dd'))<0 then 0
+		end zcount
+		from (
+  		select rownum r_num, a.* from 
+  		(
+  			select * from class 
+  			<if test="searchValue != null">
+  			<where>
+  				<choose>
+  				  <when test="searchType==1">
+  				  		c_title Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==2">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==3">
+  				  		c_loc1 Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <otherwise></otherwise>
+  				</choose>
+  			</where>
+  		 </if>
+  			 order by c_num desc
+  		) a
+  		) WHERE  r_num between #{begin} and #{end}
+  		]]>
+  	</select>
+ 	
+ 	<!--  다혜 부분 -->
+    <!-- 상세페이지에서 구매or담기버튼 클릭시-->
+    <insert id="insertClassList" parameterType="scvo">
+       insert into sc_list values(sc_list_seq.nextVal,#{c_title},#{ms_id},#{sc_buy})
+    </insert>
+    
+    <!--  장바구니에서 단일 구매버튼 클릭시 -->
+    <update id="updateClassList" parameterType="scvo">
+      update sc_list set sc_buy=#{sc_buy}
+      where sc_num=#{sc_num}
+   </update>
+   <!-- 장바구니에서 삭제버튼 클릭시-->
+   <delete id="deleteclass_list" parameterType="int">
+      delete from sc_list where sc_num = #{sc_num}
+   </delete>
+   
+   <!-- 프로시져 폐기상황을 대비해서 기본 생성문을 남김 HJ
+   		강의 테이블의 구조 변경 횟수에 인지하고 있음
+   -->
+   <!-- <insert id="createclass2">
+		insert into class values(class_seq.nextval,#{c_title},#{c_name},
+		to_date(#{c_date1},'yymmdd'),to_date(#{c_date2},'yymmdd'),#{c_pnum},#{c_loc1},#{c_loc2},
+		#{c_img},#{c_comment},#{c_category},#{c_price},#{c_count})
+	</insert>
+    -->
+</mapper>  
+
