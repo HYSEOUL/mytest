@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="tc_listMapper">
+
+	<resultMap type="tcvo" id="m_teacherClassList">
+		<id property="c_title" column="c_title" javaType="String" />
+		<result property="tc_num" column="tc_num" />
+		<collection property="cvo" javaType="java.util.List"
+			resultMap="classResult" ofType="cvo"></collection>
+	</resultMap>
+	<resultMap type="cvo" id="classResult">
+		<id property="c_num" column="c_num" javaType="int" />
+		<result property="c_name" column="c_name" />
+		<result property="c_category" column="c_category" />
+		<result property="c_date1" column="c_date1" />
+		<result property="c_date2" column="c_date2" />
+		<result property="c_price" column="c_price" />
+	</resultMap>
+	
+	<select id="tc_list" parameterType="String"
+		resultMap="m_teacherClassList">
+		select c.c_name, to_char(c_date1,'yy-mm-dd')
+		c_date1, c.c_num, to_char(c_date2,'yy-mm-dd') c_date2, 
+		c.c_category, c.c_price,tl.c_title,tl.tc_num
+		from tc_list tl,class c 
+		where
+		tl.c_title = c.c_title
+		and tl.mt_id= #{mt_id}
+	</select>
+
+	<!-- select:create procedure 를 먼저 실행해야 함.
+		create or replace procedure ps_in_tc(
+		 tctitle in tc_list.c_title%type, 
+		 tcid in tc_list.mt_id%type)
+		  is
+		  begin
+		  insert into tc_list( tc_num,c_title,mt_id)
+		values(tc_list_seq.nextVal,tctitle,tcid);
+		 end;
+		  -->
+
+	<select id="create" statementType="CALLABLE" parameterType="tcvo">
+		{
+		call ps_in_tc(#{c_title},#{mt_id})
+		}
+	</select>
+
+	<delete id="tc_listDelete" parameterType="int">
+		delete from tc_list where tc_num = #{tc_num}
+	</delete>
+	
+	<resultMap type="scvo" id="ClassList_student">
+	<id property="sc_num" column="sc_num"/>
+	<result property="c_title" column="c_title"/>
+	<result property="ms_id" column="ms_id"/>
+	<result property="sc_buy" column="sc_buy"/>
+	<collection property="msvo" javaType="java.util.List"
+			resultMap="mslist" ofType="msvo"></collection>
+	</resultMap>
+	
+	<resultMap type="msvo" id="mslist">
+	<id property="ms_num" column="ms_num"/>
+	<result property="ms_id" column="ms_id"/>
+	<result property="ms_email" column="ms_email"/>
+	<result property="ms_name" column="ms_name"/>
+	<result property="ms_birth" column="ms_birth"/>
+	<result property="ms_gender" column="ms_gender"/>
+	<result property="ms_phone" column="ms_phone"/>
+	<result property="ms_loc1" column="ms_loc1"/>
+	<result property="ms_regdate" column="ms_regdate"/>
+	<result property="ms_boolean" column="ms_boolean"/>
+	<result property="ms_img" column="ms_img"/>
+	</resultMap>
+	
+	<select id="tc_list_student" parameterType="String" resultMap="ClassList_student">
+		select sl.sc_num, sl.c_title, sl.ms_id, sl.sc_buy,
+				ms.ms_num, ms.ms_id, ms.ms_email, ms.ms_name, ms.ms_birth, ms.ms_gender, 
+				ms.ms_phone, ms.ms_loc1, ms.ms_regdate, ms.ms_boolean, ms.ms_img 
+		from sc_list sl,m_student ms 
+		<where>
+		sl.ms_id = ms.ms_id 
+		and sl.sc_buy = 2 
+		and sl.c_title = #{c_title}
+		</where>
+	</select>
+
+</mapper>

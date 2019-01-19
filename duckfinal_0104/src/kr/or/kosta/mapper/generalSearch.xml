@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="generalSearch">
+
+	<select id="classsearchcount" resultType="int" parameterType="searchvo">
+		select count(*) from class
+		<if test="searchValue != null">
+  			<where>
+  				<choose>
+  				  <when test="searchType==1">
+  				  		c_title Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==2">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==3">
+  				  		c_loc1 Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <otherwise></otherwise>
+  				</choose>
+  			</where>
+  		 </if>
+	</select>
+	
+	<select id="classfield" resultType="cvo" parameterType="searchvo" >
+      	select * from (
+  		select rownum r_num, a.* from 
+  		(
+  			select * from class 
+  			<if test="searchValue != null">
+  			<where>
+  			<choose>
+  				<when test="searchType==1">
+  				  		c_title Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==2">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==3">
+  				  		c_loc1 Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  			</choose>
+  			</where>
+  			</if>
+  			order by c_num desc
+  		) a
+  		) WHERE  r_num between #{begin} and #{end}
+  	</select>
+	
+	<select id="studysearchcount" resultType="int" parameterType="searchvo">
+		select count(*) from study
+		<if test="searchValue != null">
+  			<where>
+  				<choose>
+  				  <when test="searchType==4">
+  				  		s_title Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==5">
+  				  		s_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==6">
+  				  		s_loc1 Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <otherwise></otherwise>
+  				</choose>
+  			</where>
+  		 </if>
+	</select>
+	
+	<select id="studyfield" resultType="svo" parameterType="searchvo" >
+      	select * from (
+  		select rownum r_num, a.* from 
+  		(
+  			select * from study 
+  			<if test="searchValue != null">
+  			<where>
+  			<choose>
+  				<when test="searchType==4">
+  				  		s_title Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==5">
+  				  		s_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==6">
+  				  		s_loc1 Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  			</choose>
+  			</where>
+  			</if>
+  			order by s_num desc
+  		) a
+  		) WHERE  r_num between #{begin} and #{end}
+  	</select>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	<select id="totalsearchcount" resultType="int" parameterType="searchvo">
+		select count(*) from class
+		<if test="searchValue != null">
+  			<where>
+  				<choose>
+  				  <when test="searchType==1">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==2">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==3">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==4">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==5">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==6">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==7">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==8">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==9">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==10">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <otherwise></otherwise>
+  				</choose>
+  			</where>
+  		 </if>
+	</select>
+
+	<select id="count" resultType="int" parameterType="searchvo">
+		select count(*) from class
+		<if test="searchValue != null">
+  			<where>
+  				<choose>
+  				  <when test="searchType==1">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==2">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==3">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==4">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==5">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==6">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==7">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==8">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==9">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==10">
+  				  		c_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <otherwise></otherwise>
+  				</choose>
+  			</where>
+  		 </if>
+	</select>
+	
+	<select id="field" resultType="cvo" parameterType="searchvo" >
+      	select * from (
+  		select rownum r_num, a.* from 
+  		(
+  			select * from class where c_category Like '%'|| #{searchValue} ||'%' order by c_num desc
+  		) a
+  		) WHERE  r_num between #{begin} and #{end}
+  	</select>
+  	
+  	<!-- 2018.12.23 정호연 스터디 추가 -->
+  	<select id="count_study" resultType="int" parameterType="searchvo">
+		select count(*) from study
+	</select>
+	
+	<select id="contact" resultType="svo" parameterType="searchvo" >
+      	select * from (
+  		select rownum r_num, a.* from 
+  		(
+  			select * from study where s_category Like '%'|| #{searchValue} ||'%' order by s_num desc
+  		) a
+  		) WHERE  r_num between #{begin} and #{end}
+  	</select>
+</mapper>

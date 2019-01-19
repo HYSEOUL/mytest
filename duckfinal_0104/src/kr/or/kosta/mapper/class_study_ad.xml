@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="class_study_ad">
+
+	<select id="classList" resultType="cadvo">
+		select c_num, c_title, c_name, to_char(c_date1,'yyyy-mm-dd') c_date1,
+		to_char(c_date2,'yyyy-mm-dd') c_date2, c_pnum, 
+		c_loc1, c_loc2, c_img, c_comment, c_category, c_price, c_count from classad
+	</select>
+	
+	<select id="selectOneClass" resultType="cadvo" parameterType="int">
+		select * from classad where c_num=#{c_num}
+	</select>
+	
+	<select id="studyList" resultType="sadvo">
+		select s_num, ms_id, s_title, s_category, s_loc1, s_loc2, 
+  		to_char(s_date1,'yyyy-mm-dd') s_date1, 
+        to_char(s_date2,'yyyy-mm-dd') s_date2, 
+        s_count, s_pnum, s_comment, s_price, s_img from studyad
+	</select>
+	
+	<select id="selectOneStudy" resultType="sadvo" parameterType="int">
+		select * from studyad where s_num=#{s_num}
+	</select>
+	
+</mapper>
