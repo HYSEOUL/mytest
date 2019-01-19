@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="study">
+<!-- 
+insert into study values(
+		study_seq.nextVal,'s_leeda','다혜의 아무말 대잔치!','외계어',
+		'서울시','독산동',sysdate,to_date('201111','yy-mm-dd'),
+		50,2,'다혜는 방언터졌어요','3.jpg',
+		60000,2
+		);
+ -->	
+ <insert id="createStudy" parameterType="svo">
+		insert into study values(
+		study_seq.nextVal,#{ms_id},#{s_title},#{s_category},
+		#{s_loc1},#{s_loc2},#{s_date1},#{s_date2},
+		#{s_count},#{s_pnum},#{s_comment},#{s_img},
+		#{s_price},#{s_point}
+		)
+	</insert>
+
+	<!-- <select id="selectList" resultType="svo">
+		select * from study order by s_num desc
+	</select> -->
+	
+	
+	<!-- 2018.12.23 정호연 변경 -->
+	<select id="count_study" resultType="int">
+		select count(*) from study
+	</select>
+	
+	<select id="count" resultType="int">
+		select count(*) from study
+		<if test="searchValue != null">
+  			<where>
+  				<choose>
+  				  <when test="searchType==1">
+  				  		s_title Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==2">
+  				  		s_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==3">
+  				  		s_loc1 Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <otherwise></otherwise>
+  				</choose>
+  			</where>
+  		 </if>
+	</select>
+	
+	<select id="selectList" resultType="svo" parameterType="searchvo" >
+  		<![CDATA[
+  		select s_num, ms_id, s_title, s_category, s_loc1, s_loc2, to_date(s_date1,'yyyy-mm-dd') s_date1, 
+        	to_date(s_date2,'yyyy-mm-dd') s_date2, s_count, s_pnum, s_comment, s_img, s_price, s_point,
+		case when (to_date(sysdate,'yyyy-mm-dd'))-(to_date(s_date2,'yyyy-mm-dd'))<=0  then 0
+		when (to_date(sysdate,'yyyy-mm-dd'))- (to_date(s_date2,'yyyy-mm-dd'))>0 then 1
+		end s_zcount
+  		from (
+  			select * from study order by s_num desc
+  		)
+  		]]>
+  	</select>
+  	
+  	<select id="listsearch" resultType="svo" parameterType="searchvo" >
+  		select s_num, ms_id, s_title, s_category, s_loc1, s_loc2, to_date(s_date1,'yyyy-mm-dd') s_date1, 
+        to_date(s_date2,'yyyy-mm-dd') s_date2, s_count, s_pnum, s_comment, s_img, s_price, s_point,
+		case when (to_date(sysdate,'yyyy-mm-dd'))-(to_date(s_date2,'yyyy-mm-dd')) &lt;= 0  then 0
+		when (to_date(sysdate,'yyyy-mm-dd'))- (to_date(s_date2,'yyyy-mm-dd')) &gt; 0 then 1
+		end s_zcount
+  		from (
+  		select rownum r_num, a.* from 
+  		(
+  			select * from study 
+  			<if test="searchValue != null">
+  			<where>
+  				<choose>
+  				  <when test="searchType==1">
+  				  		s_title Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==2">
+  				  		s_category Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <when test="searchType==3">
+  				  		s_loc1 Like '%'|| #{searchValue} ||'%' 
+  				  </when>
+  				  <otherwise></otherwise>
+  				</choose>
+  			</where>
+  		 </if>
+  			 order by s_num desc
+  		) a
+  		) WHERE  r_num between #{begin} and #{end}
+  	</select>
+  	
+  	<!-- 다혜부분 시작 -->
+  	  	
+	<insert id="insertStudyList" parameterType="slvo">
+		insert into study_list values(study_list_seq.nextVal,#{s_num},#{sl_id},#{ms_id},#{sl_buy})
+	</insert>
+	
+	<update id="updateClassList" parameterType="slvo">
+		update study_list set sl_buy=#{sl_buy}
+        where sl_num=#{sl_num}
+	</update>
+	
+	<delete id="deleteStudy_list" parameterType="int">
+		delete from study_list where sl_num = #{sl_num}
+	</delete>
+	  	
+  	<!-- 다혜부분 끄읏 -->
+  	
+  	<update id="updateStudy" parameterType="svo">
+		update study set s_title=#{s_title},s_category=#{s_category},
+		s_loc1=#{s_loc1},s_loc2=#{s_loc2},
+		s_date1=#{s_date1},s_date2=#{s_date2},
+		s_count=#{s_count},s_pnum=#{s_pnum},s_comment=#{s_comment},
+		s_img=#{s_img},s_price=#{s_price} where s_num=#{s_num}
+	</update>
+	
+  	<!-- 스터디 상세보기 -->
+  	<select id="selectOne" parameterType="int" resultType="svo">
+	select s_num, ms_id, s_title, s_category, s_loc1, s_loc2, to_char(s_date1,'yyyy-mm-dd') s_date1, 
+		to_char(s_date2,'yyyy-mm-dd') s_date2, s_count, s_pnum, s_comment, s_img, s_price 
+		from study where s_num=#{s_num}
+	</select>
+	
+	<delete id="deleteStudy" parameterType="int">
+		delete from study where s_num=#{s_num}
+	</delete>
+		
+	 
+	<resultMap type="svo" id="studys1Result">
+ 		<id property="s_num" column="s_num" javaType="int"/>
+ 		<result property="ms_id" column="ms_id"/>
+ 		<result property="s_title" column="s_title"/>
+ 		<result property="s_category" column="s_category"/>
+ 		<result property="s_loc1" column="s_loc1"/>
+ 		<result property="s_loc2" column="s_loc2"/>
+ 		<result property="s_date1" column="s_date1"/>
+ 		<result property="s_date2" column="s_date2"/>
+ 		<result property="s_count" column="s_count"/>
+ 		<result property="s_pnum" column="s_pnum"/>
+ 		<result property="s_comment" column="s_comment"/>
+ 		<result property="s_price" column="s_price"/>
+ 		<result property="s_point" column="s_point"/>
+ 		<result property="s_img" column="s_img"/>
+ 		<collection property="s1rvo" javaType="java.util.List" ofType="s1rvo">
+ 			<id property="s1_num" column="s1_num" javaType="int"/> 
+ 			<result property="s_num" column="s_num"/>
+ 			<result property="s1_id" column="s1_id"/> 
+ 			<result property="s1_text" column="s1_text"/> 
+ 			<result property="s1_date" column="s1_date"/>	
+			<result property="ms_id" column="ms_id"/> 					
+ 		</collection>
+	 </resultMap>
+	 
+	 <select id="studys1list" parameterType="int" resultMap="studys1Result"> 	 	
+	 	select s.s_num, s.ms_id, s.s_title, s.s_category,
+	 	s.s_loc1, s.s_loc2, to_char(s_date1,'yyyy-mm-dd') s_date1, 
+		to_char(s_date2,'yyyy-mm-dd') s_date2, s.s_count,
+	 	s.s_pnum, s.s_comment, s.s_price, s.s_point,
+	 	s.s_img,
+	 	s1.s1_num, s1.s_num, s1.s1_id, s1.s1_text, to_char(s1_date,'yyyy-mm-dd') s1_date, s1.ms_id 
+	 	from study s, s1_review s1 
+	 	where s.s_num = s1.s_num(+) and s.s_num = #{num}	order by s.s_num desc	
+ 	</select>
+	
+</mapper>
