@@ -1,0 +1,207 @@
+/* m_student_listOne */
+.mypageInfo-box{
+   border: 2px solid black;
+   overflow: hidden;
+}
+.mypageInfo-left{
+   width:35%;
+   height: 70%;
+   margin: 4%;
+   padding: 3%;
+   float: left;
+}
+.mypageInfo-right{
+   width:44%;
+   height: 70%;
+   margin: 4%;
+   padding: 3%;
+   float: left;
+}
+
+.mypageInfo-img{
+   width:310px ;
+   height:325px;
+   border: 0.5px solid gray;
+   
+}
+.mypageInfo-table-h5{
+   margin-left: 130px;
+   margin-top:-25px;
+   margin-bottom: 30px;
+}
+.mypageInfo-right-calendar{
+   width:44%;
+   height: 70%;
+   margin: 4% 4% 4% 0%;
+   padding: 2% 3% 3% 0%;
+   float: left;
+}
+.mypageInfo-right-table{
+   width:65%;
+   height: 70%;
+   margin: 4% 2% 2% -11%;
+   padding: 2% 0% 3% 0%; 
+   float: left;
+}
+.mypageInfo-right-point{
+   width:60%;
+   height: 70%;
+   margin: 1% 2% 1% -12%;
+   padding: 4% 4% 4% 4%;
+   float: left;
+}
+.table-head-st{
+   font-weight: bold;
+}
+/* .table-head-st-{ */
+
+/* 메뉴 버튼 */
+.mypage-menu-bar{
+   margin: 0% 5% -7px 5%;
+   padding: 0px 0px 0px 16px;
+}
+
+.btn-menu-selected {
+   background-color: white;
+   border-bottom: none;
+   /*  border-top:2px solid black;  */
+   border-right:2px solid black;
+   border-left:2px solid black;
+   color: black;
+   padding: 15px 32px;
+   text-align: center;
+   text-decoration: none;
+   display: inline-block;
+   font-size: 25px;
+   cursor: pointer;
+   
+   font-weight:bold;
+   margin:-2px 0px -2px 0px;
+   /* border-radius: 15px 15px 0px 0px; */   
+}
+.btn-menu-selected:hover{
+   background-color: gray;
+   border-bottom: none;
+   /* border-top:2px solid black; */
+   border-right:2px solid black;
+   border-left:2px solid black;
+   color: black;
+   padding: 15px 32px;
+   text-align: center;
+   text-decoration: none;
+   display: inline-block;
+   font-size: 25px;
+   cursor: pointer;
+   
+   font-weight:bold;
+   margin:-2px 0px -2px 0px;
+   /* border-radius: 15px 15px 0px 0px; */
+}
+.btn-menu {
+   background-color: black;
+   border: 2px solid black;
+   color: white;
+   padding: 15px 32px;
+   text-align: center;
+   text-decoration: none;
+   display: inline-block;
+   font-size: 18px;
+   cursor: pointer;
+   
+   margin:0px 0px -2px 0px;
+   border-radius: 15px 15px 0px 0px;
+}
+.btn-menu:hover{
+   background-color: gray;
+   border-bottom: none;
+   color: black;
+   padding: 15px 32px;
+   text-align: center;
+   text-decoration: none;
+   display: inline-block;
+   font-size: 18px;
+   cursor: pointer;
+   
+   font-weight:bold;
+   margin:0px 0px -2px 0px;
+   border-radius: 15px 15px 0px 0px;
+}
+/* 메뉴 버튼 */
+/* mileage  point */
+.btn-point{
+   background-color: white;
+   border: 2px solid black;
+   color: black;
+   padding: 10px 24px;
+   text-align: center;
+   text-decoration: none;
+   display: inline-block;
+   font-size: 18px;
+   cursor: pointer;
+   
+   margin:18px 0px -2px 0px;
+   border-radius: 15px 15px;
+}
+.btn-point:hover{
+   background-color: gray;
+   border: 2px solid black;
+   color: black;
+   padding: 10px 24px;
+   text-align: center;
+   text-decoration: none;
+   display: inline-block;
+   font-size: 18px;
+   cursor: pointer;
+   
+   margin:18px 0px -2px 0px;
+   border-radius: 15px 15px;
+}
+
+.student_mileage_updateForm_charge {
+   width: 100%;
+   height: 100%;
+   margin: 20px auto;
+   padding: 3%;
+   border: 2px solid black;
+}
+
+.student_mileage_updateForm_exchange {
+   width: 100%;
+   height: 100%;
+   margin: 20px auto;
+   padding: 3%;
+   border: 2px solid black;
+}
+
+.teacher_mileage_updateForm_charge {
+   width: 100%;
+   height: 100%;
+   margin: 20px auto;
+   padding: 3%;
+   border: 2px solid black;
+}
+
+.teacher_mileage_updateForm_exchange {
+   width: 100%;
+   height: 100%;
+   margin: 20px auto;
+   padding: 3%;
+   border: 2px solid black;
+}
+/* mileage  point */
+
+/* my class Student */
+.mypage-class-studentBtn{
+   background-color: white;
+   border: 2px solid black;
+   color: black;
+   padding: 5px 15px;
+   text-align: center;
+   text-decoration: none;
+   display: inline-block;
+   font-size: 14px;
+   cursor: pointer;
+   
+   margin:0px 0px -2px 0px;
+   border-radius: 15px 15px;
+}

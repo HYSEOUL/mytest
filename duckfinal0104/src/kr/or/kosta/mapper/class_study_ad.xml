@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="class_study_ad">
+
+	<select id="classList" resultType="cadvo">
+		select * from classad
+	</select>
+	
+	<select id="selectOneClass" resultType="cadvo" parameterType="int">
+		select * from classad where c_num=#{c_num}
+	</select>
+	
+	<select id="studyList" resultType="sadvo">
+		select * from studyad
+	</select>
+	
+	<select id="selectOneStudy" resultType="sadvo" parameterType="int">
+		select * from studyad where s_num=#{s_num}
+	</select>
+	
+</mapper>

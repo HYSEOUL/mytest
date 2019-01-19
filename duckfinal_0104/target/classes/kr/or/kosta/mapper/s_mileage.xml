@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="s_mileage">
+
+<insert id="create" parameterType="smvo"><!-- s_mileage.create -->
+	insert into s_mileage values(s_mileage_seq.nextVal, #{ms_id}, #{sm_point})
+</insert>
+<select id="selectOne" parameterType="String" resultType="smvo"><!-- s_mileage.selectOne -->
+	select sm_num, sm_point, ms_id from s_mileage where ms_id =#{ms_id}
+</select>
+
+<update id="s_mileageupdate" parameterType="smvo"><!-- timeout="60"> -->
+		update s_mileage SET
+		<if test="smNumber == 0"><!-- 변화 가능한(? + or -) math_point값 -->
+			sm_point=sm_point+(#{math_point})
+		</if>
+		<if test="smNumber != null">
+			<choose>
+				<when test="smNumber == 1"><!-- 소액과금 = 1 -->
+					sm_point=sm_point-5000
+				</when>
+				<when test="smNumber == 2"><!-- 고액과금(추천) = 2 -->
+					sm_point=sm_point-10000
+				</when>
+			</choose>
+		</if>
+		<if test="smNumber == 4"><!-- 4 = 충전 -->
+			sm_point=sm_point+#{math_point}
+		</if>
+		<if test="smNumber == 5"><!-- 5 = 환전 -->
+			sm_point=sm_point-#{math_point}
+		</if>
+		<where>
+		ms_id =#{ms_id}
+		</where>
+	</update>
+	
+	<!-- 다혜부분 -->
+	<update id="BuyUpdate" parameterType="smvo">
+	update s_mileage set
+	sm_point = sm_point-(#{math_point})
+	where ms_id = #{ms_id}
+	</update>
+	<!-- 다혜부분 끝 -->
+
+</mapper>
